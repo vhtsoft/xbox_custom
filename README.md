@@ -1,2 +1,7 @@
-# xbox_custom
-new features for xbox company
+## XBox Custom
+
+Add some new feature to system for XBox company
+
+#### License
+
+mit
