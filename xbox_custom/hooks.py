@@ -26,7 +26,9 @@ app_license = "mit"
 
 # include js, css files in header of mixer.html
 # app_include_css = "/assets/xbox_custom/css/xbox_custom.css"
-# app_include_js = "/assets/xbox_custom/js/xbox_custom.js"
+app_include_js = [
+    "/assets/xbox_custom/js/quotation-process.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/xbox_custom/css/xbox_custom.css"

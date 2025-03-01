@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2025-02-22 23:47:17.142732",
+ "docmeta": "DocMeta",
+ "engine": "InnoDB",
+ "field_order": [
+  "column_break_embj",
+  "item_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_note",
+   "fieldtype": "Small Text",
+   "ignore_user_permissions": 1,
+   "label": "Notes",
+   "translatable": 1
+  },
+  {
+   "fieldname": "column_break_embj",
+   "fieldtype": "Column Break",
+   "ignore_user_permissions": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-23 02:38:45.381460",
+ "modified_by": "Administrator",
+ "module": "XBox Custom",
+ "name": "Item Note",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
