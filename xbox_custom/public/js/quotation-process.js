@@ -19,14 +19,12 @@ vhtfm.ui.form.on('Quotation', {
 
                 $link.off("click").on("click", function (e) {
                     e.preventDefault();
-                    console.log('TEST: Click Yêu cầu khảo sát');
 
                     check_assigned_users(frm, function (hasAssigned) {
                         if (hasAssigned) {
                             console.log("Đã assigned user -> Thực hiện click mặc định");
                             originalClickEvent?.call($link[0], e); // Thực hiện sự kiện click ban đầu
                         } else {
-                            console.log("Chưa có user assigned -> Thực hiện assignment_event()");
                             assignment_event(frm);
 
                             // Lưu sự kiện click để thực hiện sau khi modal đóng
