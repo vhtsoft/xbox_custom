@@ -1,4 +1,4 @@
-# Copyright (c) 2025, vhtsoft.com and Contributors
+# Copyright (c) 2025, vhtsoft.com 
 # See license.txt
 
 # import vhtfm

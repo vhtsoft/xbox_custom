@@ -40,7 +40,6 @@ vhtfm.ui.form.on('Quotation', {
         
         // Theo dõi khi modal "Assign To" đóng
         $(document).on("hidden.bs.modal", ".modal", function () {
-            console.log("Modal Assign To vừa đóng!");
             
             if (frm._pending_click_event) {
                 check_assigned_users(frm, function (hasAssigned) {
