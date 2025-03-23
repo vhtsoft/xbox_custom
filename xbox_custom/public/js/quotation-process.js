@@ -15,7 +15,7 @@ vhtfm.ui.form.on('Quotation', {
         }else if (cur_frm.doc.order_type === ORDER_ITEM) {
             setTimeout(() => {
                 let $link = frm.$wrapper.find('li.user-action[data-label="Yêu cầu khảo sát"] a');
-                let originalClickEvent = $._data($link[0], "events")?.click?.[0]?.handler;
+                let originalClickEvent = $link[0] && $._data($link[0], "events")?.click?.[0]?.handler;
 
                 $link.off("click").on("click", function (e) {
                     e.preventDefault();
