@@ -42,7 +42,6 @@ function set_reference_doctype(frm) {
 }
 
 function toggle_amount_advance(frm) {
-    console.log("frm.fields_dict.amount_advance:", frm.fields_dict.amount_advance); // Nếu undefined → Field không tồn tại
 
     if (["Receive", "Pay"].includes(frm.doc.payment_type)) {
         frm.fields_dict.amount_advance.df.hidden = 0; // Show
