@@ -28,9 +28,14 @@ app_license = "mit"
 # app_include_css = "/assets/xbox_custom/css/xbox_custom.css"
 app_include_js = [
     # "/assets/xbox_custom/js/quotation-process.js",
+    "/assets/xbox_custom/js/currency.js",
     "/assets/xbox_custom/js/sale-order-process.js",
     "/assets/xbox_custom/js/payment_entry.js",
 ]
+
+# has_permission = {
+#     "Sales Order": "xbox_custom.permissions.sales_order.has_write_permission"
+# }
 
 # include js, css files in header of web template
 # web_include_css = "/assets/xbox_custom/css/xbox_custom.css"
@@ -133,9 +138,9 @@ app_include_js = [
 # ---------------
 # Override standard docmeta classes
 
-# override_docmeta_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_docmeta_class = {
+	"Sales Order": "xbox_custom.overrides.sales_order.custom_sales_order"
+}
 
 # Document Events
 # ---------------
@@ -177,10 +182,18 @@ app_include_js = [
 
 # Overriding Methods
 # ------------------------------
-#
+#/media/do-ngoc-tu/Data1/VHTSOFT/V15/xbox2/apps/vhterp/vhterp/accounts/docmeta/payment_entry/payment_entry.py
 # override_whitelisted_methods = {
-# 	"vhtfm.mixer.docmeta.event.event.get_events": "xbox_custom.event.get_events"
+#     "vhtfm.mixer.search.search_link": "xbox_custom.overrides.sales_order.search_link",
+#     "vhterp.accounts.docmeta.payment_entry.payment_entry.get_outstanding_reference_documents": "xbox_custom.overrides.outstanding.get_outstanding_reference_documents",
+#     "vhterp.accounts.docmeta.payment_entry.payment_entry.validate_reference_documents": "xbox_custom.overrides.payment_entry.validate_reference_documents"
+
 # }
+
+# from .overrides.search_link import apply as search_link_apply
+# from .overrides.payment.payment_entry import apply as payment_entry_apply
+# search_link_apply()
+# payment_entry_apply()
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the docmeta dashboard,
