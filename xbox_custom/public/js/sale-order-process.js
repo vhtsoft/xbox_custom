@@ -5,47 +5,71 @@ const workflowActions = {
   approved: __("Approve"), // Thêm trạng thái approved
 };
 
+async function update_advance_and_outstanding(frm) {
+	try {
+		// Bắt hệ thống tính lại grand_total trước
+		await frm.script_manager.trigger("calculate_taxes_and_totals");
+
+		let r = await vhtfm.call({
+			method: "vhtfm.client.get_list",
+			args: {
+				docmeta: "Payment Entry",
+				filters: {
+					payment_type: "Receive",
+					sales_order: frm.doc.name,
+					docstatus: 1
+				},
+				fields: ["name", "paid_amount"]
+			}
+		});
+
+		if (r.message) {
+			let total_advance = 0;
+			r.message.forEach(pe => {
+				total_advance += flt(pe.paid_amount);
+			});
+
+			// Sau khi chắc chắn grand_total đã được tính lại
+			let grand_total = flt(frm.doc.grand_total);
+			let advance_paid = flt(frm.doc.advance_paid || total_advance);
+			let outstanding_amount = grand_total - advance_paid;
+
+			await frm.set_value("advance_paid_temp", total_advance);
+			await frm.set_value("outstanding_amount", outstanding_amount);
+		}
+	} catch (err) {
+		console.error("Lỗi khi cập nhật:", err);
+	}
+}
+
+vhtfm.ui.form.on("Sales Taxes and Charges", {
+  rate: function(frm, cdt, cdn) {
+      update_advance_and_outstanding(frm);
+  },
+  tax_amount: function(frm, cdt, cdn) {
+      update_advance_and_outstanding(frm);
+  },
+  charge_type: function(frm, cdt, cdn) {
+      update_advance_and_outstanding(frm);
+  },
+  account_head: function(frm, cdt, cdn) {
+      update_advance_and_outstanding(frm);
+  }
+});
+
+vhtfm.ui.form.on("Sales Order Item", {
+	qty(frm) {
+		update_advance_and_outstanding(frm);
+	},
+	rate(frm) {
+		update_advance_and_outstanding(frm);
+	}
+});
+
 vhtfm.ui.form.on("Sales Order", {
   
   refresh: function (frm) {
-    vhtfm.call({
-            method: "vhtfm.client.get_list",
-            args: {
-                docmeta: "Payment Entry",
-                filters: {
-                    payment_type: "Receive", // loại nhận tiền
-                    sales_order: frm.doc.name,
-					docstatus: 1
-                },
-                fields: ["name", "paid_amount"]
-            },
-            callback: function(r) {
-                if (r.message) {
-                    let total_advance = 0;
-                    r.message.forEach(function(pe) {
-                        total_advance += flt(pe.paid_amount);
-                    });
-
-                    // Bạn có thể set vào một field custom nếu cần:
-                    if (!frm.doc.advance_paid) {
-                      frm.set_value("advance_paid_temp", total_advance);
-                    }
-                   
-                    let grand_total = flt(frm.doc.grand_total); // Lấy tổng tiền từ Sales Order
-                    let outstanding_amount;
-                    if (!frm.doc.advance_paid) {
-                      
-                      outstanding_amount = grand_total - total_advance;
-                    } else {
-                        // Nếu đã có advance_paid thì dùng giá trị hiện tại
-                        outstanding_amount = grand_total - frm.doc.advance_paid;
-                    }
-                    frm.set_value("outstanding_amount", outstanding_amount);
-
-                   
-                }
-            }
-        });
+    update_advance_and_outstanding(frm);
 
 	// vhtfm.call({
 	// 	method: "xbox_custom.overrides.sales_order.get_advance_paid_actual",
@@ -178,9 +202,38 @@ vhtfm.ui.form.on("Sales Order", {
       });
     }
   },
+  taxes_and_charges: function (frm) {
+		update_advance_and_outstanding(frm);
+	},
+
+	taxes: function (frm) {
+		update_advance_and_outstanding(frm);
+	},
+  items_on_form_rendered: function (frm) {
+    update_advance_and_outstanding(frm);
+  },
+	// Nếu bạn muốn trigger lại khi thay đổi discount hoặc shipping charge, thêm thêm ở đây
+	additional_discount_percentage: function (frm) {
+		update_advance_and_outstanding(frm);
+	},
+  taxes_add: function(frm) {
+    update_advance_and_outstanding(frm);
+  },
+  taxes_remove: function(frm) {
+      update_advance_and_outstanding(frm);
+  },
+  additional_discount_percentage: function(frm) {
+      update_advance_and_outstanding(frm);
+  },
+  discount_amount: function(frm) {
+      update_advance_and_outstanding(frm);
+  },
+  apply_discount_on: function(frm) {
+      update_advance_and_outstanding(frm);
+  },
 
   onload: function (frm) {
-    console.log("frm.fields_dict", frm.fields_dict);
+    console.log("frm.fields_dict lll:", frm.fields_dict);
     frm.fields_dict.items.grid.df.read_only = 0;
     frm.fields_dict.items.grid.df.editable_grid = 1;
     frm.refresh_field("items");

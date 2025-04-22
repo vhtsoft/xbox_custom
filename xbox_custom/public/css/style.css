@@ -1,0 +1,8 @@
+div[data-fieldname="item_code"] .indicator::before {
+    background: none;
+    content: "";
+    height: 0;
+    width: 0;
+    border-radius: var(--border-radius);
+    margin: 0;
+}
