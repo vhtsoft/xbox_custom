@@ -239,7 +239,6 @@ vhtfm.ui.form.on("Sales Order", {
   },
 
   onload: function (frm) {
-    console.log("frm.fields_dict lll:", frm.fields_dict);
     frm.fields_dict.items.grid.df.read_only = 0;
     frm.fields_dict.items.grid.df.editable_grid = 1;
     frm.refresh_field("items");
@@ -247,6 +246,22 @@ vhtfm.ui.form.on("Sales Order", {
     frm.custom_onload = function () {
       $(frm.page.wrapper).find(".dropdown-menu a").off("click");
     };
+  },
+  sales_person: function(frm, cdt, cdn) {
+      let row = locals[cdt][cdn];
+      let net_total = flt(frm.doc.net_total || 0);
+
+      // Nếu chỉ có 1 người → set full 100%
+      if (frm.doc.sales_team.length === 1) {
+          row.allocated_percentage = 100;
+          row.allocated_amount = net_total;
+
+          if (row.commission_rate) {
+              row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+          }
+
+          frm.refresh_field("sales_team");
+      }
   },
   onload_post_render: function (frm) {
     let grid = frm.fields_dict.taxes.grid;
@@ -266,7 +281,51 @@ vhtfm.ui.form.on("Sales Order", {
       grid.__custom_remove_hooked = true;
     }
   },
+    validate: function(frm) {
+
+      if (frm.doc.sales_team && frm.doc.net_total) {
+          frm.doc.sales_team.forEach(row => {
+              if (row.contribution && row.commission_rate) {
+                  row.incentives = frm.doc.net_total * (row.contribution / 100) * (row.commission_rate / 100);
+              }
+          });
+      }
+  },
+
 });
+vhtfm.ui.form.on("Sales Team", {
+  sales_person: function (frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    const net_total = flt(frm.doc.net_total || 0);
+
+    // Gán mặc định nếu là người đầu tiên
+    if (frm.doc.sales_team.length === 1) {
+        row.allocated_percentage = 100;
+        row.allocated_amount = net_total;
+
+        // Nếu đã có commission_rate thì tính incentives luôn
+        if (row.commission_rate) {
+            row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+        }
+
+        frm.refresh_field("sales_team");
+    }
+  },
+
+  commission_rate: function (frm, cdt, cdn) {
+    console.log("Call Commitsion_rate");
+      const row = locals[cdt][cdn];
+
+      // Tính lại incentives nếu đã có allocated_amount
+      if (row.allocated_amount) {
+          row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+          frm.refresh_field("sales_team");
+      }
+  }
+});
+
+
+
 
 // vhtfm.ui.form.on("Sales Order", {
 //     refresh: function(frm) {

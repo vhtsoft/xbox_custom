@@ -6,3 +6,6 @@ div[data-fieldname="item_code"] .indicator::before {
     border-radius: var(--border-radius);
     margin: 0;
 }
+.list-row-container .mx-2, .list-row-container .list-row-like{
+    display: none !important;
+}
