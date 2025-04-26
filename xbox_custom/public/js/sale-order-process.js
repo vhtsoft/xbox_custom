@@ -6,6 +6,7 @@ const workflowActions = {
 };
 
 async function update_advance_and_outstanding(frm) {
+  if (frm.doc.docstatus !== 0) return;
   try {
     // Bắt hệ thống tính lại grand_total trước
     await frm.script_manager.trigger("calculate_taxes_and_totals");
@@ -44,7 +45,6 @@ async function update_advance_and_outstanding(frm) {
 
 vhtfm.ui.form.on("Sales Taxes and Charges", {
   refresh: function (frm, cdt, cdn) {
-    console.log("Bắt đầu xóa dòng thuế", cdn);
     // Đánh dấu để xử lý sau khi xóa hoàn tất
     frm.tax_row_removed = true;
   },
@@ -61,7 +61,6 @@ vhtfm.ui.form.on("Sales Taxes and Charges", {
     update_advance_and_outstanding(frm);
   },
   change: function (frm, cdt, cdn) {
-    console.log("change");
     update_advance_and_outstanding(frm);
   },
 });
@@ -87,128 +86,128 @@ vhtfm.ui.form.on("Sales Order", {
     // 		// frm.set_value("advance_paid_actual", r.message || 0);
     // 	}
     // });
-    frm.fields_dict.items.grid.df.read_only = 0;
-    frm.fields_dict.items.grid.df.editable_grid = 1;
-    frm.refresh_field("items");
-    frm.dashboard.clear_comment();
+    // frm.fields_dict.items.grid.df.read_only = 0;
+    // frm.fields_dict.items.grid.df.editable_grid = 1;
+    // frm.refresh_field("items");
+    // frm.dashboard.clear_comment();
 
-    const show_dashboard_comment = (label, value, color) => {
-      if (value) {
-        const msg = `<strong>${label}:</strong> ${vhtfm.utils.escape_html(
-          value
-        )}`;
-        frm.dashboard.add_comment(msg, color, true);
-      }
-    };
+    // const show_dashboard_comment = (label, value, color) => {
+    //   if (value) {
+    //     const msg = `<strong>${label}:</strong> ${vhtfm.utils.escape_html(
+    //       value
+    //     )}`;
+    //     frm.dashboard.add_comment(msg, color, true);
+    //   }
+    // };
 
-    if (frm.doc.workflow_state === "Rejected") {
-      show_dashboard_comment("Lý do từ chối", frm.doc.rejection_reason, "red");
-    } else if (frm.doc.workflow_state === workflowActions.yc_duyet) {
-      show_dashboard_comment(
-        "Lý do yêu cầu phê duyệt",
-        frm.doc.requirement_reason,
-        "yellow"
-      );
-    }
+    // if (frm.doc.workflow_state === "Rejected") {
+    //   show_dashboard_comment("Lý do từ chối", frm.doc.rejection_reason, "red");
+    // } else if (frm.doc.workflow_state === workflowActions.yc_duyet) {
+    //   show_dashboard_comment(
+    //     "Lý do yêu cầu phê duyệt",
+    //     frm.doc.requirement_reason,
+    //     "yellow"
+    //   );
+    // }
 
-    const bind_workflow_action = (
-      label,
-      confirmText,
-      promptFields,
-      onConfirm
-    ) => {
-      const selector = `.dropdown-menu a:has([data-title="${label}"])`;
-      const $element = $(frm.page.wrapper).find(selector);
+    // const bind_workflow_action = (
+    //   label,
+    //   confirmText,
+    //   promptFields,
+    //   onConfirm
+    // ) => {
+    //   const selector = `.dropdown-menu a:has([data-title="${label}"])`;
+    //   const $element = $(frm.page.wrapper).find(selector);
 
-      if (!$element.length) return;
+    //   if (!$element.length) return;
 
-      $element.off("click").on("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+    //   $element.off("click").on("click", function (e) {
+    //     e.preventDefault();
+    //     e.stopPropagation();
 
-        const executeAction = (values = {}) => {
-          onConfirm(values);
-          frm.doc.workflow_state = frm.doc.workflow_state;
-          frm.save().then(() => frm.refresh());
-        };
+    //     const executeAction = (values = {}) => {
+    //       onConfirm(values);
+    //       frm.doc.workflow_state = frm.doc.workflow_state;
+    //       frm.save().then(() => frm.refresh());
+    //     };
 
-        if (promptFields && promptFields.length > 0) {
-          vhtfm.prompt(promptFields, executeAction, confirmText, "Xác nhận");
-        } else {
-          vhtfm.confirm(confirmText, executeAction);
-        }
-      });
-    };
+    //     if (promptFields && promptFields.length > 0) {
+    //       vhtfm.prompt(promptFields, executeAction, confirmText, "Xác nhận");
+    //     } else {
+    //       vhtfm.confirm(confirmText, executeAction);
+    //     }
+    //   });
+    // };
 
-    const bind_all_workflow_actions = () => {
-      bind_workflow_action(
-        workflowActions.approved,
-        "Bạn có chắc muốn phê duyệt đơn hàng này?",
-        [],
-        () => {
-          frm.set_value("workflow_state", "Approved");
-          frm.set_value("requirement_reason", "");
-          frm.set_value("rejection_reason", "");
-        }
-      );
+    // const bind_all_workflow_actions = () => {
+    //   bind_workflow_action(
+    //     workflowActions.approved,
+    //     "Bạn có chắc muốn phê duyệt đơn hàng này?",
+    //     [],
+    //     () => {
+    //       frm.set_value("workflow_state", "Approved");
+    //       frm.set_value("requirement_reason", "");
+    //       frm.set_value("rejection_reason", "");
+    //     }
+    //   );
 
-      bind_workflow_action(
-        workflowActions.yc_duyet,
-        "Xác nhận yêu cầu phê duyệt",
-        [
-          {
-            label: "Lý do yêu cầu phê duyệt",
-            fieldname: "requirement_reason",
-            fieldtype: "Small Text",
-            reqd: 1,
-          },
-        ],
-        (values) => {
-          frm.set_value("workflow_state", workflowActions.yc_duyet);
-          frm.set_value("requirement_reason", values.requirement_reason);
-          frm.set_value("rejection_reason", "");
-        }
-      );
+    //   bind_workflow_action(
+    //     workflowActions.yc_duyet,
+    //     "Xác nhận yêu cầu phê duyệt",
+    //     [
+    //       {
+    //         label: "Lý do yêu cầu phê duyệt",
+    //         fieldname: "requirement_reason",
+    //         fieldtype: "Small Text",
+    //         reqd: 1,
+    //       },
+    //     ],
+    //     (values) => {
+    //       frm.set_value("workflow_state", workflowActions.yc_duyet);
+    //       frm.set_value("requirement_reason", values.requirement_reason);
+    //       frm.set_value("rejection_reason", "");
+    //     }
+    //   );
 
-      bind_workflow_action(
-        workflowActions.rejected,
-        "Xác nhận từ chối",
-        [
-          {
-            label: "Lý do từ chối",
-            fieldname: "rejection_reason",
-            fieldtype: "Small Text",
-            reqd: 1,
-          },
-        ],
-        (values) => {
-          frm.set_value("workflow_state", "Rejected");
-          frm.set_value("rejection_reason", values.rejection_reason);
-          frm.set_value("requirement_reason", "");
-        }
-      );
-    };
+    //   bind_workflow_action(
+    //     workflowActions.rejected,
+    //     "Xác nhận từ chối",
+    //     [
+    //       {
+    //         label: "Lý do từ chối",
+    //         fieldname: "rejection_reason",
+    //         fieldtype: "Small Text",
+    //         reqd: 1,
+    //       },
+    //     ],
+    //     (values) => {
+    //       frm.set_value("workflow_state", "Rejected");
+    //       frm.set_value("rejection_reason", values.rejection_reason);
+    //       frm.set_value("requirement_reason", "");
+    //     }
+    //   );
+    // };
 
-    // Gọi lần đầu khi form được refresh
-    bind_all_workflow_actions();
+    // // Gọi lần đầu khi form được refresh
+    // bind_all_workflow_actions();
 
-    // Tạo MutationObserver để quan sát thay đổi trong dropdown-menu
-    const wrapperEl = $(frm.page.wrapper).get(0);
-    if (wrapperEl) {
-      const observer = new MutationObserver((mutationsList) => {
-        for (const mutation of mutationsList) {
-          if (mutation.type === "childList") {
-            bind_all_workflow_actions(); // Re-bind mỗi khi dropdown thay đổi
-            break;
-          }
-        }
-      });
+    // // Tạo MutationObserver để quan sát thay đổi trong dropdown-menu
+    // const wrapperEl = $(frm.page.wrapper).get(0);
+    // if (wrapperEl) {
+    //   const observer = new MutationObserver((mutationsList) => {
+    //     for (const mutation of mutationsList) {
+    //       if (mutation.type === "childList") {
+    //         bind_all_workflow_actions(); // Re-bind mỗi khi dropdown thay đổi
+    //         break;
+    //       }
+    //     }
+    //   });
 
-      observer.observe(wrapperEl, {
-        childList: true,
-        subtree: true,
-      });
-    }
+    //   observer.observe(wrapperEl, {
+    //     childList: true,
+    //     subtree: true,
+    //   });
+    // }
   },
   taxes_and_charges: function (frm) {
     update_advance_and_outstanding(frm);
@@ -246,23 +245,10 @@ vhtfm.ui.form.on("Sales Order", {
     frm.custom_onload = function () {
       $(frm.page.wrapper).find(".dropdown-menu a").off("click");
     };
+
+    
   },
-  sales_person: function(frm, cdt, cdn) {
-      let row = locals[cdt][cdn];
-      let net_total = flt(frm.doc.net_total || 0);
-
-      // Nếu chỉ có 1 người → set full 100%
-      if (frm.doc.sales_team.length === 1) {
-          row.allocated_percentage = 100;
-          row.allocated_amount = net_total;
-
-          if (row.commission_rate) {
-              row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
-          }
-
-          frm.refresh_field("sales_team");
-      }
-  },
+ 
   onload_post_render: function (frm) {
     let grid = frm.fields_dict.taxes.grid;
     if (!grid.__custom_remove_hooked) {
@@ -293,39 +279,154 @@ vhtfm.ui.form.on("Sales Order", {
   },
 
 });
+
 vhtfm.ui.form.on("Sales Team", {
   sales_person: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    const net_total = flt(frm.doc.net_total || 0);
-
-    // Gán mặc định nếu là người đầu tiên
-    if (frm.doc.sales_team.length === 1) {
-        row.allocated_percentage = 100;
-        row.allocated_amount = net_total;
-
-        // Nếu đã có commission_rate thì tính incentives luôn
-        if (row.commission_rate) {
-            row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
-        }
-
-        frm.refresh_field("sales_team");
-    }
+    update_team_commissions(frm, "sales_team");
   },
-
   commission_rate: function (frm, cdt, cdn) {
-    console.log("Call Commitsion_rate");
-      const row = locals[cdt][cdn];
-
-      // Tính lại incentives nếu đã có allocated_amount
-      if (row.allocated_amount) {
-          row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
-          frm.refresh_field("sales_team");
-      }
+    update_team_commissions(frm, "sales_team");
   }
 });
 
+vhtfm.ui.form.on("Survey Team", {
+  survey_person: function (frm, cdt, cdn) {
+    update_team_commissions(frm, "survey_team");
+  },
+  commission_rate: function (frm, cdt, cdn) {
+    update_team_commissions(frm, "survey_team");
+  }
+});
+
+vhtfm.ui.form.on("Technical Team", {
+  technical_person: function (frm, cdt, cdn) {
+    update_team_commissions(frm, "technical_team");
+  },
+  commission_rate: function (frm, cdt, cdn) {
+    update_team_commissions(frm, "technical_team");
+  }
+});
+
+function update_team_commissions(frm, table_fieldname) {
+  const rows = frm.doc[table_fieldname] || [];
+  const net_total = flt(frm.doc.net_total || 0);
+
+  if (!rows.length || net_total === 0) return;
+
+  const equal_percent = flt(100 / rows.length, 2);
+
+  rows.forEach((row) => {
+    row.allocated_percentage = equal_percent;
+    row.allocated_amount = net_total * equal_percent / 100;
+
+    if (row.commission_rate) {
+      row.incentives = row.allocated_amount * flt(row.commission_rate) / 100;
+    } else {
+      row.incentives = 0;
+    }
+  });
+
+  frm.refresh_field(table_fieldname);
+}
 
 
+
+// vhtfm.ui.form.on("Survey Team", {
+//   refresh: function(frm) {
+//       // 1. Kiểm tra tồn tại child table trước khi xử lý
+//       if (!frm.fields_dict || !frm.fields_dict.survey_team) {
+//           console.warn("Field survey_team không tồn tại trong form");
+//           return;
+//       }
+
+//       // 2. Định nghĩa formatter với kiểm tra an toàn
+//       vhtfm.form.link_formatters["Employee"] = function(value, doc) {
+//           if (!doc) return value;
+//           return doc.employee_name || value;
+//       };
+
+//       // 3. Refresh grid với kiểm tra tồn tại
+//       if (frm.fields_dict.survey_team && frm.fields_dict.survey_team.grid) {
+//           try {
+//               frm.fields_dict.survey_team.grid.refresh();
+//           } catch (e) {
+//               console.error("Lỗi khi refresh grid:", e);
+//           }
+//       }
+//   },
+
+//   survey_person: function(frm, cdt, cdn) {
+//       // 4. Kiểm tra tồn tại các biến cần thiết
+//       if (!frm.doc || !frm.doc.survey_team || !locals[cdt] || !locals[cdt][cdn]) {
+//           return;
+//       }
+
+//       const row = locals[cdt][cdn];
+      
+//       // 5. Kiểm tra trước khi gọi API
+//       if (row.survey_person) {
+//           vhtfm.db.get_value("Employee", row.survey_person, "employee_name", (r) => {
+//               if (r && r.employee_name) {
+//                   vhtfm.model.set_value(cdt, cdn, "employee_name", r.employee_name);
+                  
+//                   // 6. Refresh an toàn với kiểm tra tồn tại
+//                   if (frm.fields_dict.survey_team && frm.fields_dict.survey_team.grid) {
+//                       setTimeout(() => {
+//                           frm.fields_dict.survey_team.grid.refresh();
+//                       }, 100);
+//                   }
+//               }
+//           });
+//       }
+
+//       // Phần logic tính toán (giữ nguyên)
+//       const net_total = flt(frm.doc.net_total || 0);
+//       if (frm.doc.survey_team && frm.doc.survey_team.length === 1) {
+//           row.allocated_percentage = 100;
+//           row.allocated_amount = net_total;
+//           if (row.commission_rate) {
+//               row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+//           }
+//           frm.refresh_field("survey_team");
+//       }
+//   }
+// });
+
+// vhtfm.ui.form.on("Technical Team", {
+//   technical_person: async function(frm, cdt, cdn) {
+//     frm.doc.technical_team[0].technical_person = frm.doc.technical_team[0].employee_name
+//     const row = locals[cdt][cdn];
+//     const net_total = flt(frm.doc.net_total || 0);
+
+//     // Gán mặc định nếu là người đầu tiên
+//     if (frm.doc.technical_team.length === 1) {
+//         row.allocated_percentage = 100;
+//         row.allocated_amount = net_total;
+
+//         // Nếu đã có commission_rate thì tính incentives luôn
+//         if (row.commission_rate) {
+//             row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+//         }
+
+//         frm.refresh_field("technical_team");
+//     }
+    
+//   },
+//   commission_rate: function (frm, cdt, cdn) {
+//     const row = locals[cdt][cdn];
+
+//     // Tính lại incentives nếu đã có allocated_amount
+//     if (row.allocated_amount) {
+//         row.incentives = row.allocated_amount * (flt(row.commission_rate) / 100);
+//         frm.refresh_field("technical_team");
+//     }
+//   }
+// });
+
+// vhtfm.form.link_formatters["Employee"] = function(value, doc) {
+//   if (!doc) return value;
+//   return `${doc.employee_name || ""}`;
+// };
 
 // vhtfm.ui.form.on("Sales Order", {
 //     refresh: function(frm) {

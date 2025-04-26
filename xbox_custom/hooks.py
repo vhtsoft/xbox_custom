@@ -139,8 +139,12 @@ app_include_js = [
 # Override standard docmeta classes
 
 override_docmeta_class = {
-	"Sales Order": "xbox_custom.overrides.sales_order.custom_sales_order"
+	"Sales Order": "xbox_custom.overrides.sales_order.custom_sales_order",
+    # "Employee": "xbox_custom.overrides.employee.employee.Employee"
 }
+# override_whitelisted_methods = {
+#     "vhtfm.mixer.search.get_link_title_map": "xbox_custom.overrides.employee.employee.get_link_title_map"
+# }
 
 # Document Events
 # ---------------
