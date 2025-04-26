@@ -267,18 +267,47 @@ vhtfm.ui.form.on("Sales Order", {
       grid.__custom_remove_hooked = true;
     }
   },
-    validate: function(frm) {
-
-      if (frm.doc.sales_team && frm.doc.net_total) {
-          frm.doc.sales_team.forEach(row => {
-              if (row.contribution && row.commission_rate) {
-                  row.incentives = frm.doc.net_total * (row.contribution / 100) * (row.commission_rate / 100);
-              }
-          });
-      }
+  before_save: async function(frm) {
+    if (!frm.doc.sales_team || frm.doc.sales_team.length === 0) {
+      await add_logged_in_user_to_sales_team(frm);
+    }
   },
+  onload: function (frm) {
+    // Khi tạo mới đơn hàng
+    if (frm.is_new()) {
+      if (!frm.doc.sales_team || frm.doc.sales_team.length === 0) {
+        add_logged_in_user_to_sales_team(frm);
+      }
+    }
+  }
 
 });
+
+async function add_logged_in_user_to_sales_team(frm) {
+  const user = vhtfm.session.user;
+
+  // 1. Tìm Employee theo User
+  const employee_result = await vhtfm.db.get_value("Employee", { user_id: user }, ["name", "employee_name"]);
+  
+  if (employee_result && employee_result.message && employee_result.message.name) {
+    const employee_id = employee_result.message.name;
+
+    // 2. Tìm Sales Person theo Employee
+    const sales_person_result = await vhtfm.db.get_value("Sales Person", { employee: employee_id }, ["name", "sales_person_name"]);
+
+    if (sales_person_result && sales_person_result.message && sales_person_result.message.name) {
+      frm.add_child("sales_team", {
+        sales_person: sales_person_result.message.name,
+        allocated_percentage: 100,
+      });
+      frm.refresh_field("sales_team");
+    } else {
+      vhtfm.msgprint(__('Không tìm thấy Sales Person ứng với Employee này.'));
+    }
+  } else {
+    vhtfm.msgprint(__('Không tìm thấy Employee ứng với User hiện tại.'));
+  }
+}
 
 vhtfm.ui.form.on("Sales Team", {
   sales_person: function (frm, cdt, cdn) {
