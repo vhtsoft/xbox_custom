@@ -5,6 +5,19 @@ const workflowActions = {
   approved: __("Approve"), // Thêm trạng thái approved
 };
 
+const ADVANCE_TYPES = {
+  "Thu phí khảo sát": {
+    field: "no_fee_survey", // Sử dụng trường trực tiếp nếu có
+    min_amount: 300000, // Giá trị tuyệt đối
+  },
+  "Đặt cọc thiết kế": {
+    min_amount: "10%", // Tính theo % grand_total
+  },
+  "Đặt cọc sản xuất": {
+    min_amount: "30%", // Tính theo % grand_total
+  },
+};
+
 async function update_advance_and_outstanding(frm) {
   if (frm.doc.docstatus !== 0) return;
   try {
@@ -80,142 +93,6 @@ vhtfm.ui.form.on("Sales Order", {
     // update_workflow_state(frm);
     // frm.fields_dict.survey_date.df.reqd = 1;
     update_advance_and_outstanding(frm);
-    // Object.keys(display_fields_by_state).forEach(fieldname => {
-    //   const display_condition = get_display_depends_on_js(fieldname);
-    //   console.log("Display condition for field", fieldname, ":", display_condition);
-    //   frm.set_df_property(fieldname, "depends_on", display_condition);
-    // });
-
-    // vhtfm.call({
-    // 	method: "xbox_custom.overrides.sales_order.get_advance_paid_actual",
-    // 	args: { so: frm.doc.name },
-    // 	callback(r) {
-    // 		console.log("r.message:", r.message );
-    // 		// frm.set_value("advance_paid_actual", r.message || 0);
-    // 	}
-    // });
-    // frm.fields_dict.items.grid.df.read_only = 0;
-    // frm.fields_dict.items.grid.df.editable_grid = 1;
-    // frm.refresh_field("items");
-    // frm.dashboard.clear_comment();
-
-    // const show_dashboard_comment = (label, value, color) => {
-    //   if (value) {
-    //     const msg = `<strong>${label}:</strong> ${vhtfm.utils.escape_html(
-    //       value
-    //     )}`;
-    //     frm.dashboard.add_comment(msg, color, true);
-    //   }
-    // };
-
-    // if (frm.doc.workflow_state === "Rejected") {
-    //   show_dashboard_comment("Lý do từ chối", frm.doc.rejection_reason, "red");
-    // } else if (frm.doc.workflow_state === workflowActions.yc_duyet) {
-    //   show_dashboard_comment(
-    //     "Lý do yêu cầu phê duyệt",
-    //     frm.doc.requirement_reason,
-    //     "yellow"
-    //   );
-    // }
-
-    // const bind_workflow_action = (
-    //   label,
-    //   confirmText,
-    //   promptFields,
-    //   onConfirm
-    // ) => {
-    //   const selector = `.dropdown-menu a:has([data-title="${label}"])`;
-    //   const $element = $(frm.page.wrapper).find(selector);
-
-    //   if (!$element.length) return;
-
-    //   $element.off("click").on("click", function (e) {
-    //     e.preventDefault();
-    //     e.stopPropagation();
-
-    //     const executeAction = (values = {}) => {
-    //       onConfirm(values);
-    //       frm.doc.workflow_state = frm.doc.workflow_state;
-    //       frm.save().then(() => frm.refresh());
-    //     };
-
-    //     if (promptFields && promptFields.length > 0) {
-    //       vhtfm.prompt(promptFields, executeAction, confirmText, "Xác nhận");
-    //     } else {
-    //       vhtfm.confirm(confirmText, executeAction);
-    //     }
-    //   });
-    // };
-
-    // const bind_all_workflow_actions = () => {
-    //   bind_workflow_action(
-    //     workflowActions.approved,
-    //     "Bạn có chắc muốn phê duyệt đơn hàng này?",
-    //     [],
-    //     () => {
-    //       frm.set_value("workflow_state", "Approved");
-    //       frm.set_value("requirement_reason", "");
-    //       frm.set_value("rejection_reason", "");
-    //     }
-    //   );
-
-    //   bind_workflow_action(
-    //     workflowActions.yc_duyet,
-    //     "Xác nhận yêu cầu phê duyệt",
-    //     [
-    //       {
-    //         label: "Lý do yêu cầu phê duyệt",
-    //         fieldname: "requirement_reason",
-    //         fieldtype: "Small Text",
-    //         reqd: 1,
-    //       },
-    //     ],
-    //     (values) => {
-    //       frm.set_value("workflow_state", workflowActions.yc_duyet);
-    //       frm.set_value("requirement_reason", values.requirement_reason);
-    //       frm.set_value("rejection_reason", "");
-    //     }
-    //   );
-
-    //   bind_workflow_action(
-    //     workflowActions.rejected,
-    //     "Xác nhận từ chối",
-    //     [
-    //       {
-    //         label: "Lý do từ chối",
-    //         fieldname: "rejection_reason",
-    //         fieldtype: "Small Text",
-    //         reqd: 1,
-    //       },
-    //     ],
-    //     (values) => {
-    //       frm.set_value("workflow_state", "Rejected");
-    //       frm.set_value("rejection_reason", values.rejection_reason);
-    //       frm.set_value("requirement_reason", "");
-    //     }
-    //   );
-    // };
-
-    // // Gọi lần đầu khi form được refresh
-    // bind_all_workflow_actions();
-
-    // // Tạo MutationObserver để quan sát thay đổi trong dropdown-menu
-    // const wrapperEl = $(frm.page.wrapper).get(0);
-    // if (wrapperEl) {
-    //   const observer = new MutationObserver((mutationsList) => {
-    //     for (const mutation of mutationsList) {
-    //       if (mutation.type === "childList") {
-    //         bind_all_workflow_actions(); // Re-bind mỗi khi dropdown thay đổi
-    //         break;
-    //       }
-    //     }
-    //   });
-
-    //   observer.observe(wrapperEl, {
-    //     childList: true,
-    //     subtree: true,
-    //   });
-    // }
   },
   taxes_and_charges: function (frm) {
     update_advance_and_outstanding(frm);
@@ -277,9 +154,9 @@ vhtfm.ui.form.on("Sales Order", {
       $(frm.page.wrapper).find(".dropdown-menu a").off("click");
     };
 
-    Object.keys(display_fields_by_state).forEach(fieldname => {
+    Object.keys(display_fields_by_state).forEach((fieldname) => {
       const display_condition = get_display_depends_on_js(fieldname);
-      console.log("Display condition for field", fieldname, ":", display_condition);
+
       frm.set_df_property(fieldname, "depends_on", display_condition);
     });
 
@@ -289,13 +166,19 @@ vhtfm.ui.form.on("Sales Order", {
       }
     }
   },
-  before_workflow_action: function(frm) {
-    return new Promise((resolve) => {
-        const is_valid = validate_mandatory_fields(frm);
-        resolve(is_valid); // Trả về true/false
-    });
-}
+  before_workflow_action: async function (frm) {
+    const valid = await validate_mandatory_fields(frm);
+    if (!valid) {
+      return false;
+    }
   
+    const advance_ok = await check_advance_payment(frm);
+    if (!advance_ok) {
+      return false;
+    }
+  
+    return true;
+  },
 });
 
 const mandatory_fields_by_state = {
@@ -314,68 +197,147 @@ const mandatory_fields_by_state = {
 //   }
 
 // }
-function validate_mandatory_fields(frm) {
-  // 1. Kiểm tra state hiện tại có trong danh sách không
-  const current_state = frm.doc.workflow_state || frm.doc.__unsaved_workflow_state;
-  if (!current_state || !mandatory_fields_by_state[current_state]) {
-      return true; // Không cần validate
-  }
 
-  // 2. Lấy danh sách trường bắt buộc
-  const required_fields = mandatory_fields_by_state[current_state];
-  let missing_fields = [];
+async function check_advance_payment(frm) {
+  if (frm.doc.workflow_state === "Đơn hàng khảo sát") {
+    console.log("Checking advance payment for survey...");
+    try {
+      let missing_advances = [];
 
-  // 3. Kiểm tra từng trường
-  required_fields.forEach(fieldname => {
-      let value = frm.doc[fieldname];
-      
-      // Xử lý đặc biệt cho child table (survey_team)
-      if (fieldname === "survey_team") {
-          if (!value || value.length === 0) {
-              missing_fields.push("Danh sách khảo sát viên");
-          }
-      } 
-      // Xử lý cho các field thông thường
-      else if (!value) {
-          const field = frm.fields_dict[fieldname];
-          missing_fields.push(field ? field.df.label : fieldname);
+      for (const [advance_type, config] of Object.entries(ADVANCE_TYPES)) {
+        if (
+          advance_type === "Thu phí khảo sát" &&
+          frm.doc.no_fee_survey === 1
+        ) {
+          continue; // Nếu no_fee_survey == 1 thì bỏ qua
+        }
+
+        const { message: payments } = await vhtfm.call({
+          method: "vhtfm.client.get_list",
+          args: {
+            docmeta: "Payment Entry",
+            filters: {
+              payment_type: "Receive",
+              sales_order: frm.doc.name,
+              docstatus: 1,
+              type_advance: advance_type,
+            },
+            fields: ["paid_amount"],
+          },
+        });
+
+        const advance_paid = payments.reduce(
+          (sum, p) => sum + flt(p.paid_amount),
+          0
+        );
+
+        let min_advance = 0;
+        if (
+          typeof config.min_amount === "string" &&
+          config.min_amount.endsWith("%")
+        ) {
+          const percent = parseFloat(config.min_amount) / 100;
+          min_advance = frm.doc.grand_total * percent;
+        } else {
+          min_advance = config.min_amount;
+        }
+
+        if (advance_paid < min_advance) {
+          missing_advances.push(
+            `<b>${advance_type}</b>: ${format_currency(
+              advance_paid
+            )} / yêu cầu ${format_currency(min_advance)}`
+          );
+        }
       }
-  });
 
-  // 4. Hiển thị thông báo nếu có trường thiếu
-  if (missing_fields.length > 0) {
-      vhtfm.msgprint({
-          title: __("Thiếu thông tin bắt buộc"),
+      if (missing_advances.length > 0) {
+        await vhtfm.msgprint({
+          title: __("Không đủ tiền thanh toán"),
           indicator: "red",
-          message: __("Vui lòng nhập đầy đủ các trường sau trước khi tiếp tục:") +
-              "<br><ul>" + 
-              missing_fields.map(f => `<li>${f}</li>`).join("") + 
-              "</ul>"
-      });
-      return false; // Chặn không cho chuyển trạng thái
+          message:
+            __("Các khoản thanh toán chưa đủ:") +
+            "<br><ul>" +
+            missing_advances.map((line) => `<li>${line}</li>`).join("") +
+            "</ul>",
+        });
+        return false;  // <- trực tiếp return false
+      }
+
+      return true; // OK
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra payment entries:", error);
+      return false;
+    }
   }
-  if (missing_fields.length > 0) {
-    return false; // Quan trọng: return false để chặn
+  return true;
 }
-  return true; // Cho phép chuyển trạng thái
+
+
+
+
+async function validate_mandatory_fields(frm) {
+  return new Promise(async (resolve) => {
+    const current_state =
+      frm.doc.workflow_state || frm.doc.__unsaved_workflow_state;
+    if (!current_state || !mandatory_fields_by_state[current_state]) {
+      return resolve(true);
+    }
+
+    const required_fields = mandatory_fields_by_state[current_state];
+    let missing_fields = [];
+
+    required_fields.forEach((fieldname) => {
+      let value = frm.doc[fieldname];
+
+      if (fieldname === "survey_team") {
+        if (!value || value.length === 0) {
+          missing_fields.push("Danh sách khảo sát viên");
+        }
+      } else if (!value) {
+        const field = frm.fields_dict[fieldname];
+        missing_fields.push(field ? field.df.label : fieldname);
+      }
+    });
+
+    if (missing_fields.length > 0) {
+      await vhtfm.msgprint({
+        title: __("Thiếu thông tin bắt buộc"),
+        indicator: "red",
+        message:
+          __("Vui lòng nhập đầy đủ các trường sau trước khi tiếp tục:") +
+          "<br><ul>" +
+          missing_fields.map((f) => `<li>${f}</li>`).join("") +
+          "</ul>",
+      });
+      return resolve(false);
+    }
+
+    return resolve(true);
+  });
 }
 
 const display_fields_by_state = {
   survey_date: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
   survey_team: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
-  fee_survey: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
-
+  no_fee_survey: [
+    "Đơn hàng khảo sát",
+    "Tiến hành khảo sát",
+    "Cập nhật đơn hàng",
+  ],
 };
 function get_display_depends_on_js(fieldname) {
   const allowed_states = display_fields_by_state[fieldname];
-  
+
   if (!allowed_states || allowed_states.length === 0) {
     // Nếu không có cấu hình thì luôn hiển thị
     return "eval:true";
   }
 
   // Tạo biểu thức kiểm tra workflow_state nằm trong danh sách allowed_states
-  const condition = allowed_states.map(state => `doc.workflow_state == "${state}"`).join(" || ");
+  const condition = allowed_states
+    .map((state) => `doc.workflow_state == "${state}"`)
+    .join(" || ");
 
   return `eval:(${condition})`;
 }
