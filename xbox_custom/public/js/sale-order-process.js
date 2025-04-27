@@ -76,7 +76,15 @@ vhtfm.ui.form.on("Sales Order Item", {
 
 vhtfm.ui.form.on("Sales Order", {
   refresh: function (frm) {
+    // console.log("Current workflow state:", frm);
+    // update_workflow_state(frm);
+    // frm.fields_dict.survey_date.df.reqd = 1;
     update_advance_and_outstanding(frm);
+    // Object.keys(display_fields_by_state).forEach(fieldname => {
+    //   const display_condition = get_display_depends_on_js(fieldname);
+    //   console.log("Display condition for field", fieldname, ":", display_condition);
+    //   frm.set_df_property(fieldname, "depends_on", display_condition);
+    // });
 
     // vhtfm.call({
     // 	method: "xbox_custom.overrides.sales_order.get_advance_paid_actual",
@@ -237,18 +245,6 @@ vhtfm.ui.form.on("Sales Order", {
     update_advance_and_outstanding(frm);
   },
 
-  onload: function (frm) {
-    frm.fields_dict.items.grid.df.read_only = 0;
-    frm.fields_dict.items.grid.df.editable_grid = 1;
-    frm.refresh_field("items");
-    // Cleanup trước khi render lại
-    frm.custom_onload = function () {
-      $(frm.page.wrapper).find(".dropdown-menu a").off("click");
-    };
-
-    
-  },
- 
   onload_post_render: function (frm) {
     let grid = frm.fields_dict.taxes.grid;
     if (!grid.__custom_remove_hooked) {
@@ -267,45 +263,161 @@ vhtfm.ui.form.on("Sales Order", {
       grid.__custom_remove_hooked = true;
     }
   },
-  before_save: async function(frm) {
+  before_save: async function (frm) {
     if (!frm.doc.sales_team || frm.doc.sales_team.length === 0) {
       await add_logged_in_user_to_sales_team(frm);
     }
   },
   onload: function (frm) {
-    // Khi tạo mới đơn hàng
+    frm.fields_dict.items.grid.df.read_only = 0;
+    frm.fields_dict.items.grid.df.editable_grid = 1;
+    frm.refresh_field("items");
+    // Cleanup trước khi render lại
+    frm.custom_onload = function () {
+      $(frm.page.wrapper).find(".dropdown-menu a").off("click");
+    };
+
+    Object.keys(display_fields_by_state).forEach(fieldname => {
+      const display_condition = get_display_depends_on_js(fieldname);
+      console.log("Display condition for field", fieldname, ":", display_condition);
+      frm.set_df_property(fieldname, "depends_on", display_condition);
+    });
+
     if (frm.is_new()) {
       if (!frm.doc.sales_team || frm.doc.sales_team.length === 0) {
         add_logged_in_user_to_sales_team(frm);
       }
     }
-  }
-
+  },
+  before_workflow_action: function(frm) {
+    return new Promise((resolve) => {
+        const is_valid = validate_mandatory_fields(frm);
+        resolve(is_valid); // Trả về true/false
+    });
+}
+  
 });
 
+const mandatory_fields_by_state = {
+  "Đơn hàng khảo sát": ["survey_date", "survey_team"],
+  "Tiến hành khảo sát": ["survey_date", "survey_team"],
+  "Cập nhật đơn hàng": ["survey_date", "survey_team"],
+};
+
+// function update_workflow_state(frm) {
+//   const workflow_state = frm.doc.workflow_state || frm.doc.__unsaved_workflow_state;
+//   const required_fields = mandatory_fields_by_state[workflow_state];
+//   if (required_fields && required_fields.length > 0) {
+//     required_fields.forEach(fieldname => {
+//       frm.fields_dict[fieldname].df.reqd = 1;
+//     });
+//   }
+
+// }
+function validate_mandatory_fields(frm) {
+  // 1. Kiểm tra state hiện tại có trong danh sách không
+  const current_state = frm.doc.workflow_state || frm.doc.__unsaved_workflow_state;
+  if (!current_state || !mandatory_fields_by_state[current_state]) {
+      return true; // Không cần validate
+  }
+
+  // 2. Lấy danh sách trường bắt buộc
+  const required_fields = mandatory_fields_by_state[current_state];
+  let missing_fields = [];
+
+  // 3. Kiểm tra từng trường
+  required_fields.forEach(fieldname => {
+      let value = frm.doc[fieldname];
+      
+      // Xử lý đặc biệt cho child table (survey_team)
+      if (fieldname === "survey_team") {
+          if (!value || value.length === 0) {
+              missing_fields.push("Danh sách khảo sát viên");
+          }
+      } 
+      // Xử lý cho các field thông thường
+      else if (!value) {
+          const field = frm.fields_dict[fieldname];
+          missing_fields.push(field ? field.df.label : fieldname);
+      }
+  });
+
+  // 4. Hiển thị thông báo nếu có trường thiếu
+  if (missing_fields.length > 0) {
+      vhtfm.msgprint({
+          title: __("Thiếu thông tin bắt buộc"),
+          indicator: "red",
+          message: __("Vui lòng nhập đầy đủ các trường sau trước khi tiếp tục:") +
+              "<br><ul>" + 
+              missing_fields.map(f => `<li>${f}</li>`).join("") + 
+              "</ul>"
+      });
+      return false; // Chặn không cho chuyển trạng thái
+  }
+  if (missing_fields.length > 0) {
+    return false; // Quan trọng: return false để chặn
+}
+  return true; // Cho phép chuyển trạng thái
+}
+
+const display_fields_by_state = {
+  survey_date: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
+  survey_team: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
+  fee_survey: ["Đơn hàng khảo sát", "Tiến hành khảo sát", "Cập nhật đơn hàng"],
+
+};
+function get_display_depends_on_js(fieldname) {
+  const allowed_states = display_fields_by_state[fieldname];
+  
+  if (!allowed_states || allowed_states.length === 0) {
+    // Nếu không có cấu hình thì luôn hiển thị
+    return "eval:true";
+  }
+
+  // Tạo biểu thức kiểm tra workflow_state nằm trong danh sách allowed_states
+  const condition = allowed_states.map(state => `doc.workflow_state == "${state}"`).join(" || ");
+
+  return `eval:(${condition})`;
+}
 async function add_logged_in_user_to_sales_team(frm) {
   const user = vhtfm.session.user;
 
   // 1. Tìm Employee theo User
-  const employee_result = await vhtfm.db.get_value("Employee", { user_id: user }, ["name", "employee_name"]);
-  
-  if (employee_result && employee_result.message && employee_result.message.name) {
+  const employee_result = await vhtfm.db.get_value(
+    "Employee",
+    { user_id: user },
+    ["name", "employee_name"]
+  );
+
+  if (
+    employee_result &&
+    employee_result.message &&
+    employee_result.message.name
+  ) {
     const employee_id = employee_result.message.name;
 
     // 2. Tìm Sales Person theo Employee
-    const sales_person_result = await vhtfm.db.get_value("Sales Person", { employee: employee_id }, ["name", "sales_person_name"]);
+    const sales_person_result = await vhtfm.db.get_value(
+      "Sales Person",
+      { employee: employee_id },
+      ["name", "sales_person_name"]
+    );
 
-    if (sales_person_result && sales_person_result.message && sales_person_result.message.name) {
+    if (
+      sales_person_result &&
+      sales_person_result.message &&
+      sales_person_result.message.name
+    ) {
       frm.add_child("sales_team", {
         sales_person: sales_person_result.message.name,
         allocated_percentage: 100,
       });
       frm.refresh_field("sales_team");
     } else {
-      vhtfm.msgprint(__('Không tìm thấy Sales Person ứng với Employee này.'));
+      vhtfm.msgprint(__("Không tìm thấy Sales Person ứng với Employee này."));
     }
   } else {
-    vhtfm.msgprint(__('Không tìm thấy Employee ứng với User hiện tại.'));
+    vhtfm.msgprint(__("Không tìm thấy Employee ứng với User hiện tại."));
   }
 }
 
@@ -315,7 +427,7 @@ vhtfm.ui.form.on("Sales Team", {
   },
   commission_rate: function (frm, cdt, cdn) {
     update_team_commissions(frm, "sales_team");
-  }
+  },
 });
 
 vhtfm.ui.form.on("Survey Team", {
@@ -324,7 +436,7 @@ vhtfm.ui.form.on("Survey Team", {
   },
   commission_rate: function (frm, cdt, cdn) {
     update_team_commissions(frm, "survey_team");
-  }
+  },
 });
 
 vhtfm.ui.form.on("Technical Team", {
@@ -333,7 +445,7 @@ vhtfm.ui.form.on("Technical Team", {
   },
   commission_rate: function (frm, cdt, cdn) {
     update_team_commissions(frm, "technical_team");
-  }
+  },
 });
 
 function update_team_commissions(frm, table_fieldname) {
@@ -346,10 +458,10 @@ function update_team_commissions(frm, table_fieldname) {
 
   rows.forEach((row) => {
     row.allocated_percentage = equal_percent;
-    row.allocated_amount = net_total * equal_percent / 100;
+    row.allocated_amount = (net_total * equal_percent) / 100;
 
     if (row.commission_rate) {
-      row.incentives = row.allocated_amount * flt(row.commission_rate) / 100;
+      row.incentives = (row.allocated_amount * flt(row.commission_rate)) / 100;
     } else {
       row.incentives = 0;
     }
@@ -357,8 +469,6 @@ function update_team_commissions(frm, table_fieldname) {
 
   frm.refresh_field(table_fieldname);
 }
-
-
 
 // vhtfm.ui.form.on("Survey Team", {
 //   refresh: function(frm) {
@@ -391,13 +501,13 @@ function update_team_commissions(frm, table_fieldname) {
 //       }
 
 //       const row = locals[cdt][cdn];
-      
+
 //       // 5. Kiểm tra trước khi gọi API
 //       if (row.survey_person) {
 //           vhtfm.db.get_value("Employee", row.survey_person, "employee_name", (r) => {
 //               if (r && r.employee_name) {
 //                   vhtfm.model.set_value(cdt, cdn, "employee_name", r.employee_name);
-                  
+
 //                   // 6. Refresh an toàn với kiểm tra tồn tại
 //                   if (frm.fields_dict.survey_team && frm.fields_dict.survey_team.grid) {
 //                       setTimeout(() => {
@@ -439,7 +549,7 @@ function update_team_commissions(frm, table_fieldname) {
 
 //         frm.refresh_field("technical_team");
 //     }
-    
+
 //   },
 //   commission_rate: function (frm, cdt, cdn) {
 //     const row = locals[cdt][cdn];
