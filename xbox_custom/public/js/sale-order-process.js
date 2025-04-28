@@ -198,6 +198,11 @@ const mandatory_fields_by_state = {
 
 // }
 
+function format_currency_vietnam(amount) {
+  if (amount == null) amount = 0;
+  return 'đ ' + amount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 async function check_advance_payment(frm) {
   if (frm.doc.workflow_state === "Đơn hàng khảo sát") {
     console.log("Checking advance payment for survey...");
@@ -244,9 +249,9 @@ async function check_advance_payment(frm) {
 
         if (advance_paid < min_advance) {
           missing_advances.push(
-            `<b>${advance_type}</b>: ${format_currency(
+            `<b>${advance_type}</b>: ${format_currency_vietnam(
               advance_paid
-            )} / yêu cầu ${format_currency(min_advance)}`
+            )} / yêu cầu ${format_currency_vietnam(min_advance)}`
           );
         }
       }
@@ -296,7 +301,7 @@ async function validate_mandatory_fields(frm) {
         }
       } else if (!value) {
         const field = frm.fields_dict[fieldname];
-        missing_fields.push(field ? field.df.label : fieldname);
+        missing_fields.push(field ?  __(field.df.label) : fieldname);
       }
     });
 
@@ -307,7 +312,7 @@ async function validate_mandatory_fields(frm) {
         message:
           __("Vui lòng nhập đầy đủ các trường sau trước khi tiếp tục:") +
           "<br><ul>" +
-          missing_fields.map((f) => `<li>${f}</li>`).join("") +
+          missing_fields.map((f) => `<li>${ __(f) }</li>`).join("") +
           "</ul>",
       });
       return resolve(false);
