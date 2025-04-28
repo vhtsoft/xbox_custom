@@ -200,7 +200,7 @@ const mandatory_fields_by_state = {
 
 function format_currency_vietnam(amount) {
   if (amount == null) amount = 0;
-  return 'đ ' + amount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return amount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' đ';
 }
 
 async function check_advance_payment(frm) {
