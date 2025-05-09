@@ -166,19 +166,19 @@ vhtfm.ui.form.on("Sales Order", {
       }
     }
   },
-  before_workflow_action: async function (frm) {
-    const valid = await validate_mandatory_fields(frm);
-    if (!valid) {
-      return false;
-    }
+  // before_workflow_action: async function (frm) {
+  //   const valid = await validate_mandatory_fields(frm);
+  //   if (!valid) {
+  //     return false;
+  //   }
   
-    // const advance_ok = await check_advance_payment(frm);
-    // if (!advance_ok) {
-    //   return false;
-    // }
+  //   const advance_ok = await check_advance_payment(frm);
+  //   if (!advance_ok) {
+  //     return false;
+  //   }
   
-    return true;
-  },
+  //   return true;
+  // },
 });
 
 const mandatory_fields_by_state = {
