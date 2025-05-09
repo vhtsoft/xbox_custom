@@ -154,11 +154,11 @@ vhtfm.ui.form.on("Sales Order", {
       $(frm.page.wrapper).find(".dropdown-menu a").off("click");
     };
 
-    Object.keys(display_fields_by_state).forEach((fieldname) => {
-      const display_condition = get_display_depends_on_js(fieldname);
+    // Object.keys(display_fields_by_state).forEach((fieldname) => {
+    //   const display_condition = get_display_depends_on_js(fieldname);
 
-      frm.set_df_property(fieldname, "depends_on", display_condition);
-    });
+    //   frm.set_df_property(fieldname, "depends_on", display_condition);
+    // });
 
     if (frm.is_new()) {
       if (!frm.doc.sales_team || frm.doc.sales_team.length === 0) {
@@ -172,10 +172,10 @@ vhtfm.ui.form.on("Sales Order", {
       return false;
     }
   
-    const advance_ok = await check_advance_payment(frm);
-    if (!advance_ok) {
-      return false;
-    }
+    // const advance_ok = await check_advance_payment(frm);
+    // if (!advance_ok) {
+    //   return false;
+    // }
   
     return true;
   },
